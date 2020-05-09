@@ -56,11 +56,11 @@ func rec(wr io.Writer) error {
 	}
 	ws := WsWriter{Conn: conn}
 
-	mwr := io.MultiWriter(os.Stdout, NewRecorder([]io.Writer{wr, ws}))
+	outMwr := io.MultiWriter(os.Stdout, NewRecorder([]io.Writer{wr, ws}, "o"))
 
 	// Copy stdin to the pty and the pty to stdout.
 	go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-	_, _ = io.Copy(mwr, ptmx)
+	_, _ = io.Copy(outMwr, ptmx)
 
 	return nil
 }

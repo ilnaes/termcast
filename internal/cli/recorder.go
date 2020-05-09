@@ -10,14 +10,16 @@ import (
 type Recorder struct {
 	writer []io.Writer
 	start  time.Time
+	dir    string
 	pause  time.Time
 	paused bool
 	gap    time.Duration
 }
 
-func NewRecorder(f []io.Writer) *Recorder {
+func NewRecorder(f []io.Writer, dir string) *Recorder {
 	return &Recorder{
 		writer: f,
+		dir:    dir,
 		start:  time.Now(),
 	}
 }
@@ -48,7 +50,7 @@ func (r *Recorder) Write(p []byte) (n int, err error) {
 	}
 
 	for _, w := range r.writer {
-		_, err = io.WriteString(w, fmt.Sprintf("[%.2f, %s]\n", deltaTime, b))
+		_, err = io.WriteString(w, fmt.Sprintf("[%.2f, \"%s\", %s]\n", deltaTime, r.dir, b))
 		if err != nil {
 			return 0, err
 		}

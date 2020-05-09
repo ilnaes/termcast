@@ -6,6 +6,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// an io.Writer wrapper on
+// a websocket connection
 type WsWriter struct {
 	Conn *websocket.Conn
 }
