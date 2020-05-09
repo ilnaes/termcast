@@ -18,6 +18,8 @@ type Hub struct {
 
 	// Unregister requests from clients.
 	unregister chan *Client
+
+	open chan bool
 }
 
 func newHub() *Hub {
@@ -26,10 +28,12 @@ func newHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		open:       make(chan bool),
 	}
 }
 
 func (h *Hub) run() {
+	<-h.open
 	for {
 		select {
 		case client := <-h.register:

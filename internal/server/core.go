@@ -2,6 +2,7 @@ package server
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -26,11 +27,14 @@ func Run() {
 	hub := newHub()
 	go hub.run()
 	http.HandleFunc("/", serveHome)
-	http.HandleFunc("/rec", serveRecWs)
+	http.HandleFunc("/rec", func(w http.ResponseWriter, r *http.Request) {
+		serveRecWs(hub, w, r)
+	})
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
 	err := http.ListenAndServe(*addr, nil)
+	fmt.Printf("Listening on %s", *addr)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

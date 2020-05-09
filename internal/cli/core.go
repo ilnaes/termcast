@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -18,7 +19,7 @@ func getCmd() string {
 	return os.Getenv("SHELL")
 }
 
-func rec(wr io.Writer) error {
+func rec(w io.Writer) error {
 	// Create arbitrary command.
 	cmd := getCmd()
 	c := exec.Command(cmd)
@@ -49,14 +50,21 @@ func rec(wr io.Writer) error {
 		panic(err)
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+	fmt.Printf("\x1b[0;0H\x1b[2J")
+
+	wr := NewRecorder(w, "o")
+	wr.WriteHead(cmd)
+	writers := []io.Writer{os.Stdout, wr}
 
 	conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:8080/rec", nil)
-	if err != nil {
-		return err
-	}
-	ws := WsWriter{Conn: conn}
+	if err == nil {
+		ws := NewRecorder(WsWriter{Conn: conn}, "o")
+		writers = append(writers, ws)
 
-	outMwr := io.MultiWriter(os.Stdout, NewRecorder([]io.Writer{wr, ws}, "o"))
+		fmt.Printf("\x1b[32mConnected to server\x1b[00m\r\n")
+	}
+
+	outMwr := io.MultiWriter(writers...)
 
 	// Copy stdin to the pty and the pty to stdout.
 	go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
