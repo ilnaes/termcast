@@ -8,14 +8,14 @@ import (
 )
 
 type Recorder struct {
-	writer io.Writer
+	writer []io.Writer
 	start  time.Time
 	pause  time.Time
 	paused bool
 	gap    time.Duration
 }
 
-func NewRecorder(f io.Writer) *Recorder {
+func NewRecorder(f []io.Writer) *Recorder {
 	return &Recorder{
 		writer: f,
 		start:  time.Now(),
@@ -47,9 +47,11 @@ func (r *Recorder) Write(p []byte) (n int, err error) {
 		return 0, err
 	}
 
-	_, err = io.WriteString(r.writer, fmt.Sprintf("[%.2f, %s]\n", deltaTime, b))
-	if err != nil {
-		return 0, err
+	for _, w := range r.writer {
+		_, err = io.WriteString(w, fmt.Sprintf("[%.2f, %s]\n", deltaTime, b))
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	return len(p), err

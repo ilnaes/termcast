@@ -9,6 +9,8 @@ import (
 	"syscall"
 
 	"github.com/creack/pty"
+	"github.com/gorilla/websocket"
+	. "github.com/ilnaes/termcast/internal"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -48,7 +50,13 @@ func rec(wr io.Writer) error {
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
-	mwr := io.MultiWriter(os.Stdout, NewRecorder(wr))
+	conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:8080/rec", nil)
+	if err != nil {
+		return err
+	}
+	ws := WsWriter{Conn: conn}
+
+	mwr := io.MultiWriter(os.Stdout, NewRecorder([]io.Writer{wr, ws}))
 
 	// Copy stdin to the pty and the pty to stdout.
 	go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
